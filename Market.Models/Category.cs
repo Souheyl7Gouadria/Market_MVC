@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace MarketWeb.Models
+namespace Market.Models
 {
     public class Category
     {

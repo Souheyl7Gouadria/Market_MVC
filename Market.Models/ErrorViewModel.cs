@@ -1,4 +1,4 @@
-namespace MarketWeb.Models
+namespace Market.Models
 {
     public class ErrorViewModel
     {

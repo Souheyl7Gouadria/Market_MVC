@@ -15,4 +15,10 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Market.DataAccess\Market.DataAccess.csproj" />
+    <ProjectReference Include="..\Market.Models\Market.Models.csproj" />
+    <ProjectReference Include="..\Market.Utility\Market.Utility.csproj" />
+  </ItemGroup>
+
 </Project>

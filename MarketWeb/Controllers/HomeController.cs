@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using MarketWeb.Models;
+using Market.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketWeb.Controllers

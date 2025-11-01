@@ -1,5 +1,5 @@
-﻿using MarketWeb.Data;
-using MarketWeb.Models;
+﻿using Market.DataAccess.Data;
+using Market.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
