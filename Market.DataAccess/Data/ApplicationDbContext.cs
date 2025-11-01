@@ -1,7 +1,7 @@
-﻿using MarketWeb.Models;
+﻿using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace MarketWeb.Data
+namespace Market.DataAccess.Data
 {
     public class ApplicationDbContext : DbContext
     {
