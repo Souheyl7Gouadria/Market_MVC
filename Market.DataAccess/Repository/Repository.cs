@@ -12,15 +12,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DataAccess.Repository
 {
+    // Provides common CRUD operations for any entity type T
     public class Repository<T> : IRepository<T> where T : class
     {
 
         private readonly ApplicationDbContext _dbContext;
-        internal DbSet<T> _dbSet;
+        internal DbSet<T> _dbSet;// generic DbSet for entity type T
         public Repository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
-            _dbSet = _dbContext.Set<T>();// here _dbSet = _dbContext.Categories;
+            _dbSet = _dbContext.Set<T>();// dynamically gets the DbSet for the given entity type T
         }
         public void Add(T entity)
         {
