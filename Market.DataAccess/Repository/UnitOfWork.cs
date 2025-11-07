@@ -16,11 +16,13 @@ namespace Market.DataAccess.Repository
     {
         private readonly ApplicationDbContext _dbContext;
         public ICategoryRepository CategoryRepository { get; private set; }
+        public IProductRepository ProductRepository { get; private set; }
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
             CategoryRepository = new CategoryRepository(_dbContext);
+            ProductRepository = new ProductRepository(_dbContext);
         }
 
         // Single save method, commits all tracked changes
