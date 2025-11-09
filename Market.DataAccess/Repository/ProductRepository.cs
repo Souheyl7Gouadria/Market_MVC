@@ -21,7 +21,24 @@ namespace Market.DataAccess.Repository
 
         public void Update(Product product)
         {
-            _dbContext.Products.Update(product);
+            var objFromDb = _dbContext.Products.FirstOrDefault(u => u.Id == product.Id);
+            if (objFromDb != null)
+            {
+                objFromDb.Title = product.Title;
+                objFromDb.ISBN = product.ISBN;
+                objFromDb.Price = product.Price;
+                objFromDb.Price50 = product.Price50;
+                objFromDb.ListPrice = product.ListPrice;
+                objFromDb.Price100 = product.Price100;
+                objFromDb.Description = product.Description;
+                objFromDb.CategoryId = product.CategoryId;
+                objFromDb.Author = product.Author;
+                if (product.ImageUrl != null)
+                {
+                    objFromDb.ImageUrl = product.ImageUrl;
+                }
+            }
         }
+
     }
 }

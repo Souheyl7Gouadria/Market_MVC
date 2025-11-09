@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,8 +21,8 @@ namespace Market.Models
         public string Description { get; set; }
 
         [Required]
-        public string ISBN { get; set; 
-        }
+        public string ISBN { get; set; }
+
         [Required]
         public string Author { get; set; }
 
@@ -30,12 +32,12 @@ namespace Market.Models
         public double ListPrice { get; set; }
 
         [Required]
-        [Display(Name = "List Price")]
+        [Display(Name = "Price for 1-50")]
         [Range(1, 1000)]
         public double Price { get; set; }
 
         [Required]
-        [Display(Name = "Price for 1 to 50")]
+        [Display(Name = "Price for 51-100")]
         [Range(1, 1000)]
         public double Price50 { get; set; }
 
@@ -44,5 +46,14 @@ namespace Market.Models
         [Range(1, 1000)]
         public double Price100 { get; set; }
 
+        public int CategoryId { get; set; }
+
+        // Navigation property set with validateNever to avoid validation during model binding
+        [ValidateNever]
+        [ForeignKey("CategoryId")]
+        public Category Category { get; set; }
+        
+        [ValidateNever]
+        public string? ImageUrl { get; set; }
     }
 }
