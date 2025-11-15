@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Market.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251115223459_extend IdentityUser table")]
+    [Migration("20251115225046_extend IdentityUser table")]
     partial class extendIdentityUsertable
     {
         /// <inheritdoc />
