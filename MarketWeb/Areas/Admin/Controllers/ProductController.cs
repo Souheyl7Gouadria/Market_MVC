@@ -3,6 +3,8 @@ using Market.DataAccess.Repository;
 using Market.DataAccess.Repository.IRepository;
 using Market.Models;
 using Market.Models.ViewModel;
+using Market.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace MarketWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = StaticDetails.Role_Admin)]
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
