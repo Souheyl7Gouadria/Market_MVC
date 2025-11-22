@@ -11,6 +11,7 @@ namespace Market.DataAccess.Data
 
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<Company> Companies { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,7 +23,13 @@ namespace Market.DataAccess.Data
                 new Category { CategoryId = 2, Name = "SciFi", DisplayOrder = 2 },
                 new Category { CategoryId = 3, Name = "History", DisplayOrder = 3 }
             );
-            
+
+            modelBuilder.Entity<Company>().HasData(
+                new Company { Id = 1, Name = "Expensya", StreetAddress = "Rue Lac Biwa", City = "Tunis", PostalCode = "4600", State = "Tunis", PhoneNumber = "70894253" },
+                new Company { Id = 2, Name = "Vermeg", StreetAddress = "Rue Lac Biwa", City = "Tunis", PostalCode = "4550", State = "Tunis", PhoneNumber = "70584200" },
+                new Company { Id = 3, Name = "Sofrecom", StreetAddress = "Rue Lac Biwa", City = "Tunis", PostalCode = "4630", State = "Tunis", PhoneNumber = "70702303" }
+            );
+
             modelBuilder.Entity<Product>().HasData(
                 new Product
                 {
