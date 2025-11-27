@@ -60,6 +60,7 @@ namespace MarketWeb.Areas.Customer.Controllers
                 cartItem.Id = 0; // Reset Id to 0 to ensure EF treats this as a new entity
                 _unitOfWork.CartItemRepository.Add(cartItem);
             }
+            TempData["success"] = "Item added to cart successfully!";
             _unitOfWork.Save();
 
             return RedirectToAction(nameof(Index));

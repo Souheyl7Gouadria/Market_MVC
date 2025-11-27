@@ -13,6 +13,8 @@ namespace Market.DataAccess.Repository.IRepository
         ICompanyRepository CompanyRepository { get; }
         ICartItemRepository CartItemRepository { get; }
         IApplicationUserRepository ApplicationUserRepository { get; }
+        IOrderHeaderRepository OrderHeaderRepository { get; }
+        IOrderDetailRepository OrderDetailRepository { get; }
 
         void Save();
     }
