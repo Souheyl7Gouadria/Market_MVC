@@ -1,6 +1,7 @@
 ﻿using Market.DataAccess.Repository.IRepository;
 using Market.Models;
 using Market.Models.ViewModel;
+using Market.Utility;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -11,6 +12,7 @@ namespace MarketWeb.Areas.Customer.Controllers
     {
         
         private readonly IUnitOfWork _unitOfWork;
+        [BindProperty]
         public CartItemVM CartItemVM { get; set; }
 
         public CartController(IUnitOfWork unitOfWork)
@@ -61,6 +63,59 @@ namespace MarketWeb.Areas.Customer.Controllers
                 CartItemVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
             }
 
+            return View(CartItemVM);
+        }
+
+        [HttpPost]
+        [ActionName("Summary")] // To differentiate from the GET Summary action
+        // no need to pass cartItemVM because we are using [BindProperty]
+        public IActionResult SummaryPost()
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            // populate CartItemList again from Db because we might not have all fields in the form
+            CartItemVM.CartItemList = _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == userId, includeProperties: "Product");
+
+            CartItemVM.OrderHeader.OrderDate = System.DateTime.Now;
+            CartItemVM.OrderHeader.ApplicationUserId = userId;
+            CartItemVM.OrderHeader.ApplicationUser = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+
+            foreach (var cart in CartItemVM.CartItemList)
+            {
+                cart.Price = GetPriceBasedOnQuantity(cart);
+                CartItemVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+            }
+            // this is CRITICAL to proceed with payement: use ApplicationUser to check if there is a company is associated with the user
+            if (CartItemVM.OrderHeader.ApplicationUser.CompanyId.GetValueOrDefault() == 0)
+            {
+                // regular customer, we need to proceed to payment
+                CartItemVM.OrderHeader.PaymentStatus = StaticDetails.PaymentStatusPending;
+                CartItemVM.OrderHeader.OrderStatus = StaticDetails.StatusPending;
+            }
+            else
+            {
+                // company user, we can delay the payment
+                CartItemVM.OrderHeader.PaymentStatus = StaticDetails.PaymentStatusDelayedPayment;
+                CartItemVM.OrderHeader.OrderStatus = StaticDetails.StatusApproved;
+            }
+
+            _unitOfWork.OrderHeaderRepository.Add(CartItemVM.OrderHeader);
+            _unitOfWork.Save();
+
+            // create order details for each cart item
+            foreach (var cart in CartItemVM.CartItemList)
+            {
+                OrderDetail orderDetail = new()
+                {
+                    ProductId = cart.ProductId,
+                    OrderHeaderId = CartItemVM.OrderHeader.Id,
+                    Price = cart.Price,
+                    Count = cart.Count
+                };
+                _unitOfWork.OrderDetailRepository.Add(orderDetail);
+                _unitOfWork.Save();
+            }
             return View(CartItemVM);
         }
 
