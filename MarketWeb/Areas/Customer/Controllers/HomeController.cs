@@ -1,7 +1,11 @@
-using System.Diagnostics;
+using Humanizer;
 using Market.DataAccess.Repository.IRepository;
 using Market.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace MarketWeb.Areas.Customer.Controllers
 {
@@ -25,8 +29,41 @@ namespace MarketWeb.Areas.Customer.Controllers
 
         public IActionResult Details(int id)
         {
-            Product product = _unitOfWork.ProductRepository.Get(u => u.Id == id ,includeProperties: "Category");
-            return View(product);
+            CartItem cart = new CartItem()
+            {
+                Product = _unitOfWork.ProductRepository.Get(u => u.Id == id, includeProperties: "Category"),
+                Count = 1,
+                ProductId = id
+            };
+            return View(cart);
+        }
+
+        [HttpPost]
+        [Authorize] // only authenticated users can add to cart
+        public IActionResult Details(CartItem cartItem)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            cartItem.ApplicationUserId = userId;
+
+            CartItem cartItemFromDb = _unitOfWork.CartItemRepository.Get(u => u.ApplicationUserId == userId && u.ProductId == cartItem.ProductId);
+
+            if (cartItemFromDb != null)
+            {
+                // cartItem already exists in DB, update count
+                cartItemFromDb.Count += cartItem.Count;
+                _unitOfWork.CartItemRepository.Update(cartItemFromDb);
+            }
+            else
+            {
+                // cartItem does not exist in DB, add new
+                cartItem.Id = 0; // Reset Id to 0 to ensure EF treats this as a new entity
+                _unitOfWork.CartItemRepository.Add(cartItem);
+            }
+            TempData["success"] = "Item added to cart successfully!";
+            _unitOfWork.Save();
+
+            return RedirectToAction(nameof(Index));
         }
 
         public IActionResult Privacy()

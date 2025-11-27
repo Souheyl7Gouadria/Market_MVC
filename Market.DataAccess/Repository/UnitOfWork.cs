@@ -18,6 +18,10 @@ namespace Market.DataAccess.Repository
         public ICategoryRepository CategoryRepository { get; private set; }
         public IProductRepository ProductRepository { get; private set; }
         public ICompanyRepository CompanyRepository { get; private set; }
+        public ICartItemRepository CartItemRepository { get; private set; }
+        public IApplicationUserRepository ApplicationUserRepository { get; private set; }
+        public IOrderHeaderRepository OrderHeaderRepository { get; private set; }
+        public IOrderDetailRepository OrderDetailRepository { get; private set; }
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
@@ -25,6 +29,10 @@ namespace Market.DataAccess.Repository
             CategoryRepository = new CategoryRepository(_dbContext);
             ProductRepository = new ProductRepository(_dbContext);
             CompanyRepository = new CompanyRepository(_dbContext);
+            CartItemRepository = new CartItemRepository(_dbContext);
+            ApplicationUserRepository = new ApplicationUserRepository(_dbContext);
+            OrderHeaderRepository = new OrderHeaderRepository(_dbContext);
+            OrderDetailRepository = new OrderDetailRepository(_dbContext);
         }
 
         // Single save method, commits all tracked changes
