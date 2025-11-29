@@ -79,15 +79,20 @@ namespace MarketWeb.Areas.Customer.Controllers
 
             CartItemVM.OrderHeader.OrderDate = System.DateTime.Now;
             CartItemVM.OrderHeader.ApplicationUserId = userId;
-            CartItemVM.OrderHeader.ApplicationUser = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+
+            // this is causing a bug (inserting a record with an existing id in AspNetUsers)
+            // this is CRITICAL never populate a navigation property when adding a new record
+
+            //CartItemVM.OrderHeader.ApplicationUser = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+            ApplicationUser applicationUser = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
 
             foreach (var cart in CartItemVM.CartItemList)
             {
                 cart.Price = GetPriceBasedOnQuantity(cart);
                 CartItemVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
             }
-            // this is CRITICAL to proceed with payement: use ApplicationUser to check if there is a company is associated with the user
-            if (CartItemVM.OrderHeader.ApplicationUser.CompanyId.GetValueOrDefault() == 0)
+            // To proceed with payement: use ApplicationUser to check if there is a company associated with the user
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
             {
                 // regular customer, we need to proceed to payment
                 CartItemVM.OrderHeader.PaymentStatus = StaticDetails.PaymentStatusPending;
@@ -116,7 +121,18 @@ namespace MarketWeb.Areas.Customer.Controllers
                 _unitOfWork.OrderDetailRepository.Add(orderDetail);
                 _unitOfWork.Save();
             }
-            return View(CartItemVM);
+
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
+            {
+                // stripe logic
+            }
+
+            return RedirectToAction(nameof(OrderConfirmation), new {id = CartItemVM.OrderHeader.Id});
+        }
+
+        public IActionResult OrderConfirmation(int id)
+        {
+            return View(id);
         }
 
         public IActionResult Plus(int cardId)
