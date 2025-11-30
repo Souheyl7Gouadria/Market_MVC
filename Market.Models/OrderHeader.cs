@@ -25,6 +25,10 @@ namespace Market.Models
         public string? Carrier { get; set; }
         public DateTime PaymentDate { get; set; }
         public DateOnly PaymentDueDate { get; set; }
+        // when we access Stripe, a session is created to handle the payment
+        public string? SessionId { get; set; }
+
+        // the Id returned by stripe to identify the payment
         public string? PaymentIntentId { get; set; }
 
         [Required]
