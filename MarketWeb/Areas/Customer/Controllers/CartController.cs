@@ -170,6 +170,26 @@ namespace MarketWeb.Areas.Customer.Controllers
 
         public IActionResult OrderConfirmation(int id)
         {
+            OrderHeader orderHeader = _unitOfWork.OrderHeaderRepository.Get(u => u.Id == id, includeProperties: "ApplicationUser");
+
+            if (orderHeader.PaymentStatus != StaticDetails.PaymentStatusDelayedPayment)
+            {
+                // order is made by customer
+                var service = new SessionService();
+                Session session = service.Get(orderHeader.SessionId);
+
+                if (session.PaymentStatus.ToLower() == "paid")
+                {
+                    _unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(id, session.Id, session.PaymentIntentId);
+                    _unitOfWork.OrderHeaderRepository.UpdateStatus(id, StaticDetails.StatusApproved, StaticDetails.PaymentStatusApproved);
+                    _unitOfWork.Save();
+                }
+            }
+            // clear the shopping cart
+            List<CartItem> cartItems = _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == orderHeader.ApplicationUserId).ToList();
+            _unitOfWork.CartItemRepository.RemoveRange(cartItems);
+            _unitOfWork.Save();
+
             return View(id);
         }
 
