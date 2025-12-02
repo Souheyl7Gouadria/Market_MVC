@@ -1,5 +1,6 @@
 ﻿using Market.DataAccess.Repository.IRepository;
 using Market.Models;
+using Market.Models.ViewModel;
 using Market.Utility;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,24 @@ namespace MarketWeb.Areas.Admin.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        public IActionResult Details(int id)
+        {
+
+            OrderVM orderVM = new()
+            {
+                OrderHeader = _unitOfWork.OrderHeaderRepository.Get(
+                    u => u.Id == id,
+                    includeProperties: "ApplicationUser"
+                ),
+                OrderDetailList = _unitOfWork.OrderDetailRepository.GetAll(
+                    filter: u => u.OrderHeaderId == id,
+                    includeProperties: "Product"
+                )
+            };
+
+            return View(orderVM);
         }
 
         #region API CALLS
