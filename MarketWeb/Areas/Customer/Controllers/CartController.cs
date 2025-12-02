@@ -4,6 +4,7 @@ using Market.Models.ViewModel;
 using Market.Utility;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Stripe.Checkout;
 
 namespace MarketWeb.Areas.Customer.Controllers
 {
@@ -124,7 +125,44 @@ namespace MarketWeb.Areas.Customer.Controllers
 
             if (applicationUser.CompanyId.GetValueOrDefault() == 0)
             {
-                // stripe logic
+                // stripe logic, following official documentation
+
+                var domain = "https://localhost:7130/";
+                var options = new SessionCreateOptions
+                {
+                    SuccessUrl = domain + $"Customer/Cart/OrderConfirmation?id={CartItemVM.OrderHeader.Id}",
+                    CancelUrl = domain + "Customer/Cart/Index",
+                    LineItems = new List<SessionLineItemOptions>(),
+                    Mode = "payment",
+                };
+
+
+                foreach (var item in CartItemVM.CartItemList)
+                {
+                    var sessionLineItem = new SessionLineItemOptions
+                    {
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            UnitAmount = (long)(item.Price * 100), // 19.50 => 1950
+                            Currency = "usd", // Tunisia is not supported by stripe
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = item.Product.Title
+                            }
+                        },
+                        Quantity = item.Count
+                    };
+                    options.LineItems.Add(sessionLineItem);
+                }
+
+                var service = new SessionService();
+                Session session = service.Create(options);
+                // paymentIntentId is null for the moment, it only gets populated after the payment is successful
+                _unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(CartItemVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+                _unitOfWork.Save();
+
+                Response.Headers.Add("Location", session.Url);
+                return new StatusCodeResult(303);
             }
 
             return RedirectToAction(nameof(OrderConfirmation), new {id = CartItemVM.OrderHeader.Id});
@@ -132,6 +170,26 @@ namespace MarketWeb.Areas.Customer.Controllers
 
         public IActionResult OrderConfirmation(int id)
         {
+            OrderHeader orderHeader = _unitOfWork.OrderHeaderRepository.Get(u => u.Id == id, includeProperties: "ApplicationUser");
+
+            if (orderHeader.PaymentStatus != StaticDetails.PaymentStatusDelayedPayment)
+            {
+                // order is made by customer
+                var service = new SessionService();
+                Session session = service.Get(orderHeader.SessionId);
+
+                if (session.PaymentStatus.ToLower() == "paid")
+                {
+                    _unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(id, session.Id, session.PaymentIntentId);
+                    _unitOfWork.OrderHeaderRepository.UpdateStatus(id, StaticDetails.StatusApproved, StaticDetails.PaymentStatusApproved);
+                    _unitOfWork.Save();
+                }
+            }
+            // clear the shopping cart
+            List<CartItem> cartItems = _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == orderHeader.ApplicationUserId).ToList();
+            _unitOfWork.CartItemRepository.RemoveRange(cartItems);
+            _unitOfWork.Save();
+
             return View(id);
         }
 
