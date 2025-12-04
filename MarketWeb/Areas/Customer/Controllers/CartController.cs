@@ -123,6 +123,7 @@ namespace MarketWeb.Areas.Customer.Controllers
                 _unitOfWork.Save();
             }
 
+            // if regular customer, proceed to payment
             if (applicationUser.CompanyId.GetValueOrDefault() == 0)
             {
                 // stripe logic, following official documentation
