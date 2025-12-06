@@ -25,21 +25,6 @@ namespace MarketWeb.Areas.Customer.Controllers
         public IActionResult Index()
         {
             IEnumerable<Product> productList = _unitOfWork.ProductRepository.GetAll(includeProperties: "Category");
-
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier);
-            
-            if (claim != null)
-            {
-                // User is logged in, initialize/refresh session from database
-                HttpContext.Session.SetInt32(StaticDetails.SessionCart, 
-                    _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == claim.Value).Count());
-            }
-            else
-            {
-                HttpContext.Session.SetInt32(StaticDetails.SessionCart, 0);
-            }
-            
             return View(productList);
         }
 
