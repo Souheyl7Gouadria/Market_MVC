@@ -5,6 +5,7 @@ using Market.Utility;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Stripe.Checkout;
+using Microsoft.AspNetCore.Http;
 
 namespace MarketWeb.Areas.Customer.Controllers
 {
@@ -209,6 +210,7 @@ namespace MarketWeb.Areas.Customer.Controllers
             if (cartFromDb.Count <= 1)
             {
                 _unitOfWork.CartItemRepository.Remove(cartFromDb);
+                HttpContext.Session.SetInt32(StaticDetails.SessionCart, _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count()-1);
             }
             else
             {
@@ -222,8 +224,8 @@ namespace MarketWeb.Areas.Customer.Controllers
         public IActionResult Remove(int cardId)
         {
             var cartFromDb = _unitOfWork.CartItemRepository.Get(u => u.Id == cardId);
-            
             _unitOfWork.CartItemRepository.Remove(cartFromDb);
+            HttpContext.Session.SetInt32(StaticDetails.SessionCart, _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count() - 1);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }

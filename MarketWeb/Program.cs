@@ -27,6 +27,16 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = $"/Identity/Account/Logout";
     options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
 });
+
+builder.Services.AddDistributedMemoryCache();// creates in memory storage for session (single server, Distributed refers to IDistributedCache interface and no the implementation)
+// 1 - add session to services
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(100);
+    options.Cookie.HttpOnly = true; // block js access to the cookie
+    options.Cookie.IsEssential = true; // session works even if user declines non-essential cookies
+});
+
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
@@ -46,6 +56,8 @@ app.UseStaticFiles();
 // configure stripe api key globally, required for stripe services to work
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
 app.UseRouting();
+// 2 - enable session middleware in the request pipeline
+app.UseSession(); 
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
