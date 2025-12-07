@@ -28,6 +28,12 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
 });
 
+builder.Services.AddAuthentication().AddFacebook(options =>
+{
+    options.AppId = "1585816185658742";
+    options.AppSecret = "b3b8a28681d25cff534c428d65f1c90d";
+});
+
 builder.Services.AddDistributedMemoryCache();// creates in memory storage for session (single server, Distributed refers to IDistributedCache interface and no the implementation)
 // 1 - add session to services
 builder.Services.AddSession(options =>
