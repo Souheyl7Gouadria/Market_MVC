@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Market.Utility;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Stripe;
+using Market.DataAccess.DbInitializer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +31,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddAuthentication().AddFacebook(options =>
 {
-    options.AppId = "1585816185658742";
-    options.AppSecret = "b3b8a28681d25cff534c428d65f1c90d";
+    options.AppId = builder.Configuration["Facebook:AppId"];
+    options.AppSecret = builder.Configuration["Facebook:AppSecret"];
 });
 
 builder.Services.AddDistributedMemoryCache();// creates in memory storage for session (single server, Distributed refers to IDistributedCache interface and no the implementation)
@@ -42,6 +43,8 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true; // block js access to the cookie
     options.Cookie.IsEssential = true; // session works even if user declines non-essential cookies
 });
+
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -66,9 +69,20 @@ app.UseRouting();
 app.UseSession(); 
 app.UseAuthentication();
 app.UseAuthorization();
+SeedDatabase();
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
     pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+
+void SeedDatabase()
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+        dbInitializer.Initialize();
+    }
+}
