@@ -2,9 +2,11 @@
 using Market.Models;
 using Market.Models.ViewModel;
 using Market.Utility;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Stripe.Checkout;
+using System.Security.Claims;
 
 namespace MarketWeb.Areas.Customer.Controllers
 {
@@ -20,6 +22,7 @@ namespace MarketWeb.Areas.Customer.Controllers
         {
             _unitOfWork = unitOfWork;
         }
+        [Authorize]
         public IActionResult Index()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
@@ -191,6 +194,9 @@ namespace MarketWeb.Areas.Customer.Controllers
             _unitOfWork.CartItemRepository.RemoveRange(cartItems);
             _unitOfWork.Save();
 
+            // reset session cart count
+            HttpContext.Session.SetInt32(StaticDetails.SessionCart, 0);
+
             return View(id);
         }
 
@@ -209,6 +215,7 @@ namespace MarketWeb.Areas.Customer.Controllers
             if (cartFromDb.Count <= 1)
             {
                 _unitOfWork.CartItemRepository.Remove(cartFromDb);
+                HttpContext.Session.SetInt32(StaticDetails.SessionCart, _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count()-1);
             }
             else
             {
@@ -222,8 +229,8 @@ namespace MarketWeb.Areas.Customer.Controllers
         public IActionResult Remove(int cardId)
         {
             var cartFromDb = _unitOfWork.CartItemRepository.Get(u => u.Id == cardId);
-            
             _unitOfWork.CartItemRepository.Remove(cartFromDb);
+            HttpContext.Session.SetInt32(StaticDetails.SessionCart, _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count() - 1);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }

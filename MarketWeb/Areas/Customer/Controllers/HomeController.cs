@@ -1,6 +1,7 @@
 using Humanizer;
 using Market.DataAccess.Repository.IRepository;
 using Market.Models;
+using Market.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -53,16 +54,19 @@ namespace MarketWeb.Areas.Customer.Controllers
                 // cartItem already exists in DB, update count
                 cartItemFromDb.Count += cartItem.Count;
                 _unitOfWork.CartItemRepository.Update(cartItemFromDb);
+                _unitOfWork.Save();
             }
             else
             {
                 // cartItem does not exist in DB, add new
                 cartItem.Id = 0; // Reset Id to 0 to ensure EF treats this as a new entity
                 _unitOfWork.CartItemRepository.Add(cartItem);
+                _unitOfWork.Save();
+                // add to session the count of cart items for the user
+                HttpContext.Session.SetInt32(StaticDetails.SessionCart, _unitOfWork.CartItemRepository.GetAll(u => u.ApplicationUserId == userId).Count());
             }
             TempData["success"] = "Item added to cart successfully!";
-            _unitOfWork.Save();
-
+            
             return RedirectToAction(nameof(Index));
         }
 
