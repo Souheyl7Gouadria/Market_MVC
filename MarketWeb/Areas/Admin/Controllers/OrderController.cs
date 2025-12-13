@@ -213,7 +213,7 @@ namespace MarketWeb.Areas.Admin.Controllers
 
             // stripe logic, following official documentation
 
-            var domain = "https://localhost:7130/";
+            var domain = Request.Scheme + "://" + Request.Host.Value + "/";
             var options = new SessionCreateOptions
             {
                 SuccessUrl = domain + $"Admin/Order/PaymentConfirmation?orderHeaderId={OrderVM.OrderHeader.Id}",
