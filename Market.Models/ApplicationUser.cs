@@ -24,5 +24,9 @@ namespace Market.Models
         [ForeignKey("CompanyId")]
         [ValidateNever]
         public Company? Company { get; set; }
+
+        // additional property to store the role of the user, we need it for the Users table
+        [NotMapped]
+        public string Role { get; set; }
     }
 }

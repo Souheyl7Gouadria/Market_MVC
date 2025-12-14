@@ -24,8 +24,8 @@ namespace MarketWeb.Areas.Admin.Controllers
         }
         public IActionResult Index()
         {
-            List<Company> Companys = _unitOfWork.CompanyRepository.GetAll().ToList();
-            return View(Companys);
+            List<Company> Companies = _unitOfWork.CompanyRepository.GetAll().ToList();
+            return View(Companies);
         }
 
         public IActionResult CreateOrUpdate(int? id)
@@ -70,8 +70,8 @@ namespace MarketWeb.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            List<Company> Companys = _unitOfWork.CompanyRepository.GetAll().ToList();
-            return Json(new { data = Companys });
+            List<Company> Companies = _unitOfWork.CompanyRepository.GetAll().ToList();
+            return Json(new { data = Companies });
         }
 
         [HttpDelete]
