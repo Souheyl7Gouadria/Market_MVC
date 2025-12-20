@@ -17,12 +17,14 @@ namespace MarketWeb.Areas.Admin.Controllers
     [Authorize(Roles = StaticDetails.Role_Admin)]
     public class UserController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<IdentityUser> _userManager;
-        public UserController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+        private readonly IUnitOfWork _unitOfWork;
+        public UserController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, IUnitOfWork unitOfwork)
         {
-            _db = db;
+            _roleManager = roleManager;
             _userManager = userManager;
+            _unitOfWork = unitOfwork;
         }
         public IActionResult Index()
         {
@@ -31,23 +33,22 @@ namespace MarketWeb.Areas.Admin.Controllers
 
         public IActionResult RoleManagement(string userId)
         {
-            string RoleId = _db.UserRoles.FirstOrDefault(u => u.UserId == userId)?.RoleId;
-
             RoleManagementVM RoleVM = new RoleManagementVM()
             {
-                ApplicationUser = _db.ApplicationUsers.Include(u => u.Company).FirstOrDefault(u => u.Id == userId),
-                RoleList = _db.Roles.Select(r => new SelectListItem
+                //ApplicationUser = _db.ApplicationUsers.Include(u => u.Company).FirstOrDefault(u => u.Id == userId),
+                ApplicationUser = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId, includeProperties:"Company"),
+                RoleList = _roleManager.Roles.Select(r => new SelectListItem
                 {
                     Text = r.Name,
                     Value = r.Name
                 }),
-                CompanyList = _db.Companies.Select(c => new SelectListItem
+                CompanyList = _unitOfWork.CompanyRepository.GetAll().Select(c => new SelectListItem
                 {
                     Text = c.Name,
                     Value = c.Id.ToString()
                 })
             };
-            RoleVM.ApplicationUser.Role = _db.Roles.FirstOrDefault(u => u.Id == RoleId)?.Name;
+            RoleVM.ApplicationUser.Role = _userManager.GetRolesAsync(_unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId)).GetAwaiter().GetResult().FirstOrDefault();
             return View(RoleVM);
         }
 
@@ -55,14 +56,15 @@ namespace MarketWeb.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult RoleManagement(RoleManagementVM roleManagementVM)
         {
-            // get the previous role id from db
-            string oldRoleId = _db.UserRoles.FirstOrDefault(u => u.UserId == roleManagementVM.ApplicationUser.Id).RoleId;
-            string oldRoleName = _db.Roles.FirstOrDefault(u => u.Id == oldRoleId).Name;
+            string userId = roleManagementVM.ApplicationUser.Id;
+            string oldRoleName = _userManager.GetRolesAsync(_unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId)).GetAwaiter().GetResult().FirstOrDefault();
 
-            if(roleManagementVM.ApplicationUser.Role != oldRoleName)
+            ApplicationUser userFromDb = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+
+            if (roleManagementVM.ApplicationUser.Role != oldRoleName)
             {
                 // user role has been updated
-                ApplicationUser userFromDb = _db.ApplicationUsers.FirstOrDefault(u => u.Id == roleManagementVM.ApplicationUser.Id);
+                
                 if(roleManagementVM.ApplicationUser.Role == StaticDetails.Role_Company)
                 {
                     userFromDb.CompanyId = roleManagementVM.ApplicationUser.CompanyId;
@@ -72,12 +74,22 @@ namespace MarketWeb.Areas.Admin.Controllers
                     // User was Company but is now changing to a different roleso remove company association
                     userFromDb.CompanyId = null;
                 }
-                _db.SaveChanges();
-                // here we cant just do :
+                _unitOfWork.ApplicationUserRepository.Update(userFromDb);
+                _unitOfWork.Save();
+                // here we can't just do :
                 // userFromDb.Role = roleManagementVM.ApplicationUser.Role;
                 // because 'Role' property is not a db column, [NotMapped], it was added for display purpose 
                 _userManager.RemoveFromRoleAsync(userFromDb, oldRoleName).GetAwaiter().GetResult();
                 _userManager.AddToRoleAsync(userFromDb, roleManagementVM.ApplicationUser.Role).GetAwaiter().GetResult();
+            }
+            else
+            {
+                if (oldRoleName == StaticDetails.Role_Company && userFromDb.CompanyId != roleManagementVM.ApplicationUser.CompanyId)
+                {
+                    userFromDb.CompanyId = roleManagementVM.ApplicationUser.CompanyId;
+                    _unitOfWork.ApplicationUserRepository.Update(userFromDb);
+                    _unitOfWork.Save();
+                }
             }
 
             return RedirectToAction("Index"); 
@@ -87,15 +99,13 @@ namespace MarketWeb.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            List<ApplicationUser> userList = _db.ApplicationUsers.Include(u => u.Company).ToList();
+            List<ApplicationUser> userList = _unitOfWork.ApplicationUserRepository.GetAll(includeProperties: "Company").ToList();
 
-            var userRoles = _db.UserRoles.ToList();
-            var roles = _db.Roles.ToList();
+            var userRoles = _unitOfWork.ApplicationUserRepository.GetAll(includeProperties: "Company").ToList();
 
             foreach (var user in userList)
             {
-                var roleId = userRoles.FirstOrDefault(u => u.UserId == user.Id)?.RoleId;
-                user.Role = roles.FirstOrDefault(r => r.Id == roleId).Name;
+                user.Role = _userManager.GetRolesAsync(user).GetAwaiter().GetResult().FirstOrDefault();
 
                 if (user.Company == null)
                 {
@@ -109,7 +119,7 @@ namespace MarketWeb.Areas.Admin.Controllers
         public IActionResult LockUnlock([FromBody] string id)
         {
 
-            var objFromDb = _db.ApplicationUsers.FirstOrDefault(u => u.Id == id);
+            var objFromDb = _unitOfWork.ApplicationUserRepository.Get(u => u.Id == id);
             if(objFromDb == null)
             {
                 return Json(new {success = false, message = "Error while Locking/Unlocking"});
@@ -123,7 +133,8 @@ namespace MarketWeb.Areas.Admin.Controllers
             {
                 objFromDb.LockoutEnd = DateTime.Now.AddYears(1);
             }
-            _db.SaveChanges();
+            _unitOfWork.ApplicationUserRepository.Update(objFromDb);
+            _unitOfWork.Save();
             return Json(new { success = true, message = "Locking/Unlocking action is Successful" });
         }
 
