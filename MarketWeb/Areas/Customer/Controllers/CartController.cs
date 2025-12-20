@@ -34,8 +34,12 @@ namespace MarketWeb.Areas.Customer.Controllers
                 OrderHeader = new()
             };
 
+            // get all product images from db then filter the ones that figure in the cart
+            IEnumerable<ProductImage> productImages = _unitOfWork.ProductImageRepository.GetAll();
+
             foreach(var cart in CartItemVM.CartItemList)
             {
+                cart.Product.ProductImages = productImages.Where(productImage => productImage.ProductId == cart.Product.Id).ToList();
                 cart.Price = GetPriceBasedOnQuantity(cart);
                 CartItemVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
             }

@@ -33,10 +33,11 @@ namespace Market.DataAccess.Repository
                 objFromDb.Description = product.Description;
                 objFromDb.CategoryId = product.CategoryId;
                 objFromDb.Author = product.Author;
-                if (product.ImageUrl != null)
-                {
-                    objFromDb.ImageUrl = product.ImageUrl;
-                }
+                objFromDb.ProductImages = product.ProductImages;
+                //if (product.ImageUrl != null)
+                //{
+                //    objFromDb.ImageUrl = product.ImageUrl;
+                //}
             }
         }
 

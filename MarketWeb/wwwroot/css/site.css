@@ -18,7 +18,12 @@ a.navbar-brand {
     word-break: break-all;
 }
 
-
+.card-img-top {
+    aspect-ratio: 5 / 6;
+    width: 100%;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
     color: #fff;
