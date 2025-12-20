@@ -24,7 +24,7 @@ namespace MarketWeb.Areas.Customer.Controllers
 
         public IActionResult Index()
         {
-            IEnumerable<Product> productList = _unitOfWork.ProductRepository.GetAll(includeProperties: "Category");
+            IEnumerable<Product> productList = _unitOfWork.ProductRepository.GetAll(includeProperties: "Category,ProductImages");
             return View(productList);
         }
 
@@ -32,7 +32,7 @@ namespace MarketWeb.Areas.Customer.Controllers
         {
             CartItem cart = new CartItem()
             {
-                Product = _unitOfWork.ProductRepository.Get(u => u.Id == id, includeProperties: "Category"),
+                Product = _unitOfWork.ProductRepository.Get(u => u.Id == id, includeProperties: "Category,ProductImages"),
                 Count = 1,
                 ProductId = id
             };

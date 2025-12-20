@@ -167,13 +167,19 @@ namespace MarketWeb.Areas.Admin.Controllers
                 return Json(new {success = false, message = "Error while deleting"});
             }
 
-            // delete image from wwwroot
-            //var oldImagePath = Path.Combine(_hostEnvironment.WebRootPath, productToBeDeleted.ImageUrl.TrimStart('\\'));
+            string productPath = @"images\products\product-" + id;
+            string finalPath = Path.Combine(_hostEnvironment.WebRootPath, productPath);
 
-            //if (System.IO.File.Exists(oldImagePath))
-            //{
-            //    System.IO.File.Delete(oldImagePath);
-            //}
+            if (Directory.Exists(finalPath))
+            {
+                // delete all images inside the folder
+                string[] imagesPath = Directory.GetFiles(finalPath);
+                foreach(string imagePath in imagesPath)
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+                Directory.Delete(finalPath);
+            }
 
             _unitOfWork.ProductRepository.Remove(productToBeDeleted);
             _unitOfWork.Save();
